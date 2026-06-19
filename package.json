@@ -1,0 +1,13 @@
+{
+  "name": "pong",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "servor src --reload",
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "devDependencies": {
+    "servor": "^4.0.2"
+  }
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong</title>
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+  <pong-game>
+    <div slot="header" class="header-panel">
+      <div class="controls">
+        <label class="control-label">
+          Mejor de
+          <select class="max-score">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="25">25</option>
+            <option value="30">30</option>
+            <option value="35">35</option>
+            <option value="40">40</option>
+            <option value="45">45</option>
+            <option value="50">50</option>
+          </select>
+        </label>
+        <label class="control-label">
+          Velocidad
+          <select class="speed">
+            <option value="0.5">Fácil</option>
+            <option value="0.75" selected>Medio</option>
+            <option value="1">Difícil</option>
+          </select>
+        </label>
+      </div>
+      <pong-score></pong-score>
+    </div>
+
+    <div slot="legend-left" class="legend">
+      <div class="legend-title">Jugador 1</div>
+      <div class="key-row"><kbd>W</kbd> <span class="arrow">↑</span></div>
+      <div class="key-row"><kbd>S</kbd> <span class="arrow">↓</span></div>
+    </div>
+
+    <div slot="legend-right" class="legend">
+      <div class="legend-title">Jugador 2</div>
+      <div class="key-row"><kbd>↑</kbd> <span class="arrow">↑</span></div>
+      <div class="key-row"><kbd>↓</kbd> <span class="arrow">↓</span></div>
+    </div>
+  </pong-game>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
