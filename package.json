@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "servor src --reload",
     "test": "node --test",
-    "test:watch": "node --test --watch"
+    "test:watch": "node --test --watch",
+    "deploy": "gh-pages -d src/"
   },
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "servor": "^4.0.2"
   }
 }
