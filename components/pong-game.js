@@ -2,6 +2,8 @@ import { Board } from '../modules/board.js';
 import { Ball } from '../modules/ball.js';
 import { Bar } from '../modules/bar.js';
 import { hit } from '../modules/collision.js';
+import { LAYOUT } from '../modules/layout.js';
+import { renderBoard, drawOverlay } from '../modules/renderer.js';
 import './pong-score.js';
 
 const styles = new CSSStyleSheet();
@@ -9,17 +11,34 @@ styles.replaceSync(`
   :host {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+    width: 100vw;
+    height: 100dvh;
+  }
+  ::slotted([slot="header"]) {
+    align-self: center;
+    margin: 0.5rem 0;
   }
   .canvas-row {
     display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+  .legend-col {
+    flex: 0 0 16.6667%;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    padding: 0 0.5rem 1rem;
   }
   .screen-wrapper {
     position: relative;
-    display: inline-block;
+    flex: 0 0 66.6667%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     border: 4px solid #222;
     border-radius: 10px;
     overflow: hidden;
@@ -52,22 +71,23 @@ export class PongGame extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <slot name="header"></slot>
       <div class="canvas-row">
-        <slot name="legend-left"></slot>
+        <div class="legend-col"><slot name="legend-left"></slot></div>
         <div class="screen-wrapper">
           <canvas></canvas>
           <div class="vignette"></div>
         </div>
-        <slot name="legend-right"></slot>
+        <div class="legend-col"><slot name="legend-right"></slot></div>
       </div>`;
     this.canvas = this.shadowRoot.querySelector('canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.board = new Board(1000, 600);
+    this.board = new Board(800, 480);
     this.canvas.width = this.board.width;
     this.canvas.height = this.board.height;
     this.keys = {};
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
     this._tick = this._tick.bind(this);
+    this._resize = this._resize.bind(this);
   }
 
   connectedCallback() {
@@ -80,23 +100,76 @@ export class PongGame extends HTMLElement {
     this.speedSelect?.addEventListener('change', () => {
       this.board.speedMultiplier = +this.speedSelect.value;
     });
+    this._resize();
     this._initGame();
     document.addEventListener('keydown', this._onKeyDown);
     document.addEventListener('keyup', this._onKeyUp);
+    window.addEventListener('resize', this._resize);
     requestAnimationFrame(this._tick);
   }
 
   disconnectedCallback() {
     document.removeEventListener('keydown', this._onKeyDown);
     document.removeEventListener('keyup', this._onKeyUp);
+    window.removeEventListener('resize', this._resize);
     cancelAnimationFrame(this._animFrame);
+  }
+
+  _computeBoardSize() {
+    const availW = window.innerWidth * 4 / 6;
+    const availH = window.innerHeight * 4 / 5;
+    let h = availH;
+    let w = h * LAYOUT.BOARD_ASPECT;
+    if (w > availW) { w = availW; h = w / LAYOUT.BOARD_ASPECT; }
+    return { width: Math.round(w), height: Math.round(h) };
+  }
+
+  _elementSizes() {
+    const w = this.board.width;
+    const h = this.board.height;
+    return {
+      ballSize: Math.round(w * LAYOUT.BALL_SIZE_RATIO),
+      paddleW: Math.round(w * LAYOUT.PADDLE_WIDTH_RATIO),
+      paddleH: Math.round(h * LAYOUT.PADDLE_HEIGHT_RATIO),
+      margin: Math.round(w * LAYOUT.PADDLE_MARGIN_RATIO),
+    };
+  }
+
+  _resetElements() {
+    const ball = this.board.ball;
+    const [left, right] = this.board.bars;
+    if (!ball || !left || !right) return;
+    const s = this._elementSizes();
+    const { width, height } = this.board;
+    Object.assign(ball, {
+      width: s.ballSize, height: s.ballSize,
+      baseSpeed: width * LAYOUT.BALL_SPEED_RATIO,
+      x: (width - s.ballSize) / 2, y: (height - s.ballSize) / 2,
+    });
+    const barProps = { width: s.paddleW, height: s.paddleH, speed: width * LAYOUT.PADDLE_SPEED_RATIO };
+    Object.assign(left, { ...barProps, x: s.margin, y: (height - s.paddleH) / 2 });
+    Object.assign(right, { ...barProps, x: width - s.margin - s.paddleW, y: (height - s.paddleH) / 2 });
+  }
+
+  _resize() {
+    this.board.playing = false;
+    const { width, height } = this._computeBoardSize();
+    Object.assign(this.board, { width, height });
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this._resetElements();
   }
 
   _initGame() {
     this.board.restart();
-    new Ball(500 - 12, 300 - 12, 25, this.board);
-    new Bar(20, 250, 25, 100, this.board);
-    new Bar(955, 250, 25, 100, this.board);
+    const s = this._elementSizes();
+    const { width, height } = this.board;
+    const cx = (width - s.ballSize) / 2;
+    const cy = (height - s.ballSize) / 2;
+    const ly = (height - s.paddleH) / 2;
+    new Ball(cx, cy, s.ballSize, this.board);
+    new Bar(s.margin, ly, s.paddleW, s.paddleH, this.board);
+    new Bar(width - s.margin - s.paddleW, ly, s.paddleW, s.paddleH, this.board);
     this._renderScore();
   }
 
@@ -108,9 +181,7 @@ export class PongGame extends HTMLElement {
     }
   }
 
-  _onKeyUp(ev) {
-    this.keys[ev.key] = false;
-  }
+  _onKeyUp(ev) { this.keys[ev.key] = false; }
 
   _tick() {
     this._handleInput();
@@ -152,56 +223,24 @@ export class PongGame extends HTMLElement {
 
   _onScore() {
     const { board } = this;
-    const ball = board.ball;
     this._renderScore();
     if (board.scores.left >= board.winningScore || board.scores.right >= board.winningScore) {
       board.playing = false;
       board.gameOver = true;
     } else {
-      ball.resetToCenter(ball.x < board.width / 2 ? -1 : 1);
+      board.ball.resetToCenter(board.ball.x < board.width / 2 ? -1 : 1);
     }
   }
 
-  _renderScore() {
-    if (this.scoreEl) this.scoreEl.scores = this.board.scores;
-  }
+  _renderScore() { if (this.scoreEl) this.scoreEl.scores = this.board.scores; }
 
   _render() {
-    const { ctx } = this;
-    const board = this.board;
-    ctx.clearRect(0, 0, board.width, board.height);
-    ctx.strokeStyle = '#fff';
-    ctx.setLineDash([15, 15]);
-    ctx.beginPath();
-    ctx.moveTo(board.width / 2, 0);
-    ctx.lineTo(board.width / 2, board.height);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#fff';
-    for (const el of board.elements) {
-      if (el) ctx.fillRect(el.x, el.y, el.width, el.height);
-    }
-    if (board.gameOver) {
-      const winner = board.scores.left >= board.winningScore ? 'Jugador 1' : 'Jugador 2';
-      this._drawOverlay(board, `Ganador: ${winner}`, 'Presiona espacio para reiniciar');
-    } else if (!board.playing) {
-      this._drawOverlay(board, 'Pausa', null, 0.5);
-    }
-  }
-
-  _drawOverlay(board, title, subtitle, alpha = 0.6) {
-    const { ctx } = this;
-    ctx.fillStyle = `rgba(0,0,0,${alpha})`;
-    ctx.fillRect(0, 0, board.width, board.height);
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 2.5rem "Courier New", Courier, monospace';
-    ctx.fillText(title, board.width / 2, board.height / 2 - (subtitle ? 20 : 0));
-    if (subtitle) {
-      ctx.font = '1rem "Courier New", Courier, monospace';
-      ctx.fillStyle = '#ccc';
-      ctx.fillText(subtitle, board.width / 2, board.height / 2 + 30);
+    renderBoard(this.ctx, this.board);
+    if (this.board.gameOver) {
+      const winner = this.board.scores.left >= this.board.winningScore ? 'Jugador 1' : 'Jugador 2';
+      drawOverlay(this.ctx, this.board, `Ganador: ${winner}`, 'Presiona espacio para reiniciar');
+    } else if (!this.board.playing) {
+      drawOverlay(this.ctx, this.board, 'Pausa', null, 0.5);
     }
   }
 }

@@ -1,7 +1,9 @@
+import { LAYOUT } from './layout.js';
+
 export class Bar {
   constructor(x, y, width, height, board) {
     Object.assign(this, { x, y, width, height, board });
-    this.speed = 6;
+    this.speed = board.width * LAYOUT.PADDLE_SPEED_RATIO;
     board.bars.push(this);
   }
 
