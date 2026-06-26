@@ -1,3 +1,5 @@
+import { LAYOUT } from './layout.js';
+
 const MAX_BOUNCE_ANGLE = Math.PI / 12;
 
 export class Ball {
@@ -7,7 +9,7 @@ export class Ball {
     this.width = size;
     this.height = size;
     this.board = board;
-    this.baseSpeed = 4;
+    this.baseSpeed = board.width * LAYOUT.BALL_SPEED_RATIO;
     this.speedX = this.speed;
     this.speedY = 0;
     board.ball = this;

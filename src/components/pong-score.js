@@ -21,66 +21,66 @@ styles.replaceSync(`
     align-items: center;
     font-family: 'Courier New', Courier, monospace;
     user-select: none;
-    margin-top: 0.4rem;
+    font-size: clamp(0.6rem, 1.2vw, 1rem);
   }
 
   .board {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.2rem;
+    gap: 0.2em;
     background: #0a0a0a;
-    border: 2px solid #222;
-    border-radius: 6px;
-    padding: 0.35rem 0.5rem;
+    border: 0.125em solid #222;
+    border-radius: 0.375em;
+    padding: 0.35em 0.5em;
   }
 
   .display {
     display: flex;
     align-items: center;
-    gap: 0.2rem;
+    gap: 0.2em;
   }
 
   .digit {
     position: relative;
-    width: 28px;
-    height: 48px;
+    width: 1.75em;
+    height: 3em;
   }
 
   .segment {
     position: absolute;
     background: #331111;
-    border-radius: 2px;
+    border-radius: 0.125em;
     transition: background 0.08s, box-shadow 0.08s;
   }
 
   .segment.on {
     background: #ff2200;
-    box-shadow: 0 0 6px #ff4400;
+    box-shadow: 0 0 0.375em #ff4400;
   }
 
-  .segment-a { top: 1px; left: 4px; width: 20px; height: 5px; }
-  .segment-b { top: 5px; right: 1px; width: 5px; height: 16px; }
-  .segment-c { bottom: 5px; right: 1px; width: 5px; height: 16px; }
-  .segment-d { bottom: 1px; left: 4px; width: 20px; height: 5px; }
-  .segment-e { bottom: 5px; left: 1px; width: 5px; height: 16px; }
-  .segment-f { top: 5px; left: 1px; width: 5px; height: 16px; }
-  .segment-g { top: 21px; left: 4px; width: 20px; height: 5px; }
+  .segment-a { top: 0.0625em; left: 0.25em; width: 1.25em; height: 0.3125em; }
+  .segment-b { top: 0.3125em; right: 0.0625em; width: 0.3125em; height: 1em; }
+  .segment-c { bottom: 0.3125em; right: 0.0625em; width: 0.3125em; height: 1em; }
+  .segment-d { bottom: 0.0625em; left: 0.25em; width: 1.25em; height: 0.3125em; }
+  .segment-e { bottom: 0.3125em; left: 0.0625em; width: 0.3125em; height: 1em; }
+  .segment-f { top: 0.3125em; left: 0.0625em; width: 0.3125em; height: 1em; }
+  .segment-g { top: 1.3125em; left: 0.25em; width: 1.25em; height: 0.3125em; }
 
   .dash {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 48px;
-    padding: 0 2px;
+    height: 3em;
+    padding: 0 0.125em;
   }
 
   .dash-bar {
-    width: 20px;
-    height: 5px;
-    border-radius: 2px;
+    width: 1.25em;
+    height: 0.3125em;
+    border-radius: 0.125em;
     background: #ff2200;
-    box-shadow: 0 0 6px #ff4400;
+    box-shadow: 0 0 0.375em #ff4400;
   }
 `);
 
