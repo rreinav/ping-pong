@@ -1,3 +1,5 @@
+import { LAYOUT } from './layout.js';
+
 export class Board {
   constructor(width, height) {
     Object.assign(this, {
@@ -8,8 +10,8 @@ export class Board {
       bars: [],
       ball: null,
       scores: { left: 0, right: 0 },
-      winningScore: 5,
-      speedMultiplier: 0.75,
+      winningScore: LAYOUT.DEFAULT_WINNING_SCORE,
+      speedMultiplier: LAYOUT.DEFAULT_SPEED,
     });
   }
 

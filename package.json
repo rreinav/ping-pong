@@ -1,7 +1,10 @@
 {
   "name": "pong",
+  "version": "1.0.0",
   "private": true,
+  "description": "Juego clásico de Pong con WebComponents nativos y Canvas 2D",
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "dev": "servor src --reload",
     "test": "node --test",
