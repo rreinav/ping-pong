@@ -49,6 +49,8 @@ styles.replaceSync(`
   }
   canvas {
     display: block;
+    width: 100%;
+    height: 100%;
     border: none;
     background: #000;
   }
@@ -124,15 +126,6 @@ export class PongGame extends HTMLElement {
     cancelAnimationFrame(this._animFrame);
   }
 
-  _computeBoardSize() {
-    const availW = window.innerWidth * 4 / 6;
-    const availH = window.innerHeight * 4 / 5;
-    let h = availH;
-    let w = h * LAYOUT.BOARD_ASPECT;
-    if (w > availW) { w = availW; h = w / LAYOUT.BOARD_ASPECT; }
-    return { width: Math.round(w), height: Math.round(h) };
-  }
-
   _elementSizes() {
     const w = this.board.width;
     const h = this.board.height;
@@ -162,10 +155,11 @@ export class PongGame extends HTMLElement {
 
   _resize() {
     this.board.playing = false;
-    const { width, height } = this._computeBoardSize();
-    Object.assign(this.board, { width, height });
-    this.canvas.width = width;
-    this.canvas.height = height;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = this.canvas.getBoundingClientRect();
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    Object.assign(this.board, { width: this.canvas.width, height: this.canvas.height });
     this._resetElements();
   }
 
