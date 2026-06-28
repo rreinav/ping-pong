@@ -4,6 +4,7 @@ import { Bar } from '../modules/bar.js';
 import { hit } from '../modules/collision.js';
 import { LAYOUT } from '../modules/layout.js';
 import { renderBoard, drawOverlay } from '../modules/renderer.js';
+import { playPing, playPong, resumeAudioContext } from '../modules/audio.js';
 import './pong-score.js';
 
 const styles = new CSSStyleSheet();
@@ -48,6 +49,8 @@ styles.replaceSync(`
   }
   canvas {
     display: block;
+    width: 100%;
+    height: 100%;
     border: none;
     background: #000;
   }
@@ -94,12 +97,20 @@ export class PongGame extends HTMLElement {
     this.scoreEl = this.querySelector('pong-score');
     this.maxScoreSelect = this.querySelector('.max-score');
     this.speedSelect = this.querySelector('.speed');
-    this.maxScoreSelect?.addEventListener('change', () => {
-      this.board.winningScore = +this.maxScoreSelect.value;
-    });
-    this.speedSelect?.addEventListener('change', () => {
-      this.board.speedMultiplier = +this.speedSelect.value;
-    });
+    if (this.maxScoreSelect) {
+      this.maxScoreSelect.value = LAYOUT.DEFAULT_WINNING_SCORE;
+      this.board.winningScore = LAYOUT.DEFAULT_WINNING_SCORE;
+      this.maxScoreSelect.addEventListener('change', () => {
+        this.board.winningScore = +this.maxScoreSelect.value;
+      });
+    }
+    if (this.speedSelect) {
+      this.speedSelect.value = LAYOUT.DEFAULT_SPEED;
+      this.board.speedMultiplier = LAYOUT.DEFAULT_SPEED;
+      this.speedSelect.addEventListener('change', () => {
+        this.board.speedMultiplier = +this.speedSelect.value;
+      });
+    }
     this._resize();
     this._initGame();
     document.addEventListener('keydown', this._onKeyDown);
@@ -113,15 +124,6 @@ export class PongGame extends HTMLElement {
     document.removeEventListener('keyup', this._onKeyUp);
     window.removeEventListener('resize', this._resize);
     cancelAnimationFrame(this._animFrame);
-  }
-
-  _computeBoardSize() {
-    const availW = window.innerWidth * 4 / 6;
-    const availH = window.innerHeight * 4 / 5;
-    let h = availH;
-    let w = h * LAYOUT.BOARD_ASPECT;
-    if (w > availW) { w = availW; h = w / LAYOUT.BOARD_ASPECT; }
-    return { width: Math.round(w), height: Math.round(h) };
   }
 
   _elementSizes() {
@@ -153,27 +155,25 @@ export class PongGame extends HTMLElement {
 
   _resize() {
     this.board.playing = false;
-    const { width, height } = this._computeBoardSize();
-    Object.assign(this.board, { width, height });
-    this.canvas.width = width;
-    this.canvas.height = height;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = this.canvas.getBoundingClientRect();
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    Object.assign(this.board, { width: this.canvas.width, height: this.canvas.height });
     this._resetElements();
   }
 
   _initGame() {
     this.board.restart();
-    const s = this._elementSizes();
-    const { width, height } = this.board;
-    const cx = (width - s.ballSize) / 2;
-    const cy = (height - s.ballSize) / 2;
-    const ly = (height - s.paddleH) / 2;
-    new Ball(cx, cy, s.ballSize, this.board);
-    new Bar(s.margin, ly, s.paddleW, s.paddleH, this.board);
-    new Bar(width - s.margin - s.paddleW, ly, s.paddleW, s.paddleH, this.board);
+    new Ball(0, 0, 0, this.board);
+    new Bar(0, 0, 0, 0, this.board);
+    new Bar(0, 0, 0, 0, this.board);
+    this._resetElements();
     this._renderScore();
   }
 
   _onKeyDown(ev) {
+    resumeAudioContext();
     this.keys[ev.key] = true;
     if (ev.key === ' ' || ev.key === 'Space') {
       ev.preventDefault();
@@ -205,12 +205,20 @@ export class PongGame extends HTMLElement {
     const { board } = this;
     const ball = board.ball;
     ball.move();
-    if (ball.y <= 0 || ball.y + ball.height >= board.height) {
-      ball.speedY = -ball.speedY;
-      ball.y = ball.y <= 0 ? 0 : board.height - ball.height;
-    }
+    const [left] = board.bars;
     for (const bar of board.bars) {
-      if (hit(bar, ball)) ball.collision(bar);
+      if (hit(bar, ball)) {
+        ball.collision(bar);
+        (bar === left ? playPing : playPong)();
+      }
+    }
+    if (ball.y < 0) {
+      ball.y = 0;
+      ball.speedY = Math.abs(ball.speedY);
+    }
+    if (ball.y + ball.height > board.height) {
+      ball.y = board.height - ball.height;
+      ball.speedY = -Math.abs(ball.speedY);
     }
     if (ball.x + ball.width < 0) {
       board.scores.right++;

@@ -1,6 +1,6 @@
 import { LAYOUT } from './layout.js';
 
-const MAX_BOUNCE_ANGLE = Math.PI / 12;
+const MAX_BOUNCE_ANGLE = Math.PI / 4;
 
 export class Ball {
   constructor(x, y, size, board) {
@@ -25,12 +25,34 @@ export class Ball {
   }
 
   collision(bar) {
-    const relY = bar.y + bar.height / 2 - (this.y + this.height / 2);
-    const normY = relY / (bar.height / 2);
-    const angle = normY * MAX_BOUNCE_ANGLE;
-    const sign = this.x > this.board.width / 2 ? -1 : 1;
-    this.speedX = this.speed * Math.cos(angle) * sign;
-    this.speedY = this.speed * -Math.sin(angle);
+    const overlapX1 = (this.x + this.width) - bar.x;
+    const overlapX2 = (bar.x + bar.width) - this.x;
+    const overlapY1 = (this.y + this.height) - bar.y;
+    const overlapY2 = (bar.y + bar.height) - this.y;
+
+    const minX = Math.min(overlapX1, overlapX2);
+    const minY = Math.min(overlapY1, overlapY2);
+
+    if (minX < minY) {
+      const relY = bar.y + bar.height / 2 - (this.y + this.height / 2);
+      const normY = relY / (bar.height / 2);
+      const angle = normY * MAX_BOUNCE_ANGLE;
+      const sign = this.x < bar.x ? -1 : 1;
+      this.speedX = this.speed * Math.cos(angle) * sign;
+      this.speedY = this.speed * -Math.sin(angle);
+      if (overlapX1 < overlapX2) {
+        this.x = bar.x - this.width;
+      } else {
+        this.x = bar.x + bar.width;
+      }
+    } else {
+      this.speedY = -this.speedY;
+      if (overlapY1 < overlapY2) {
+        this.y = bar.y - this.height;
+      } else {
+        this.y = bar.y + bar.height;
+      }
+    }
   }
 
   resetToCenter(dir = 1) {
